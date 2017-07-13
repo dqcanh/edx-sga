@@ -34,6 +34,7 @@ from xblock.fragment import Fragment
 
 from xmodule.util.duedate import get_extended_due_date
 
+from .excelHelper import upload_file
 
 log = logging.getLogger(__name__)
 BLOCK_SIZE = 8 * 1024
@@ -239,7 +240,8 @@ class StaffGradedAssignmentXBlock(XBlock):
         """
         submission = self.get_submission()
         if submission:
-            uploaded = {"filename": submission['answer']['filename']}
+            uploaded = {"filename" : submission['answer']['filename'],
+                        "sheet_path" : submission['answer']['sheet_path'] , }
         else:
             uploaded = None
 
@@ -414,16 +416,29 @@ class StaffGradedAssignmentXBlock(XBlock):
         require(self.upload_allowed())
         upload = request.params['assignment']
         sha1 = _get_sha1(upload.file)
+        #answer = {
+        #    "sha1": sha1,
+        #    "filename": upload.file.name,
+        #    "mimetype": mimetypes.guess_type(upload.file.name)[0],
+        #}
+        #student_id = self.student_submission_id()
+        #submissions_api.create_submission(student_id, answer)
+        path = self._file_storage_path(sha1, upload.file.name)
+        log.info("Tammd wants to know path: %s ", path)
+        if not default_storage.exists(path):
+            default_storage.save(path, File(upload.file))
+        google_sheet = "/edx/var/edxapp/uploads/" + path
+        sheet_path = upload_file(google_sheet)
+        log.info("Tammd wants to know google sheet path: %s", sheet_path)
         answer = {
             "sha1": sha1,
             "filename": upload.file.name,
             "mimetype": mimetypes.guess_type(upload.file.name)[0],
+            "sheet_path" : sheet_path,
         }
         student_id = self.student_submission_id()
         submissions_api.create_submission(student_id, answer)
-        path = self._file_storage_path(sha1, upload.file.name)
-        if not default_storage.exists(path):
-            default_storage.save(path, File(upload.file))
+
         return Response(json_body=self.student_state())
 
     @XBlock.handler
