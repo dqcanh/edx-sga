@@ -105,14 +105,20 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
 
     return credentials
+
+
 def get_credentials_web_service():
 
     SCOPES = ['https://www.googleapis.com/auth/drive']
 
-    CLIENT_SECRET_FILE = '/edx/app/edxapp/google/MOOC-fb91d4f340e0.json'
+    # CLIENT_SECRET_FILE = '/edx/app/edxapp/google/MOOC-fb91d4f340e0.json'
+
+    # use service account: canhdq-mooc-edx
+    CLIENT_SECRET_FILE = '/edx/app/edxapp/google-service/service-account/dqcanh-mooc-edx-gsaccount.json'
     APPLICATION_NAME = 'Drive API Python Quickstart'
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(CLIENT_SECRET_FILE, scopes=SCOPES)
+
     return credentials
 
 def getSheetService():
@@ -139,19 +145,25 @@ def getDriveServiceV3():
 def upload_file(filePath):
     sheets = getSheetService()
     drive = getDriveServiceV3()
-    folder_id = '0BzuRbssRpnp8MWZTZ1R3bkR6Z0U'
+
+    # folder_id = '0BzuRbssRpnp8MWZTZ1R3bkR6Z0U'  # Tammd folder
+    folder_id = '0B6-_TenkDa1kYU9oOUh5Z2xZSG8'  # canhdq folder
+
     name = "example-%s" % time.ctime()
     file_metadata = {
-  	'name' : name,
+  	    'name' : name,
         'mimeType' : 'application/vnd.google-apps.spreadsheet',
-  	'parents': [ folder_id ]
+  	    'parents': [ folder_id ]
     }
     media = MediaFileUpload(filePath,
                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         resumable=True)
-    newly_file = drive.files().create(body=file_metadata,
-                                    media_body=media).execute()
+
+    print("Canhdq wants to know the media of file upload: {}".format(media))
+
+    newly_file = drive.files().create(body=file_metadata, media_body=media).execute()
     newly_file_id = newly_file.get('id')
+
     print("Tammd wants to know newly_file_id", newly_file_id)
     # ranges = ['Sheet1']  # TODO: Update placeholder value.
 
@@ -163,7 +175,8 @@ def upload_file(filePath):
 
     request = sheets.spreadsheets().get(spreadsheetId=newly_file_id)
     response = request.execute()
-    print("Tammd wants to knwo the newly file url ", response.get("spreadsheetUrl") )
+    print("Tammd wants to knwo the newly file url ", response.get("spreadsheetUrl"))
+
     return response.get("spreadsheetUrl")
 
 def copy_file(drive, origin_file_id, copy_title):
@@ -183,6 +196,7 @@ def copy_file(drive, origin_file_id, copy_title):
            fileId=origin_file_id, body=copied_file).execute()
     except errors.HttpError, error:
        print("An error occurred: %s", error)
+
     return None
 
 def duplicate ( sheets, origin_sheet_id, sheet_id):   
@@ -244,14 +258,15 @@ def update_value_to_a_range(sheets, spreadsheetId, rangeName, rangeValue):
     value_input_option = 'USER_ENTERED'  # TODO: Update placeholder value.
 
     value_range_body = {
-    # TODO: Add desired entries to the request body. All existing entries
-    # will be replaced.
-	"values" : rangeValue
+        # TODO: Add desired entries to the request body. All existing entries
+        # will be replaced.
+        "values" : rangeValue
 	
     }
 
     request = sheets.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=range_, valueInputOption=value_input_option, body=value_range_body)
     response = request.execute()
+
     return response
 
 def clear_spreadsheet_for_a_range(sheets, spreadsheetId, rangeName):
@@ -477,7 +492,11 @@ def evaluateResult(sheets, student_worksheet, solution_worksheet, answer_range):
     return True
 	 
 def main2():
-    processSpreadsheet2(getSheetService(), "1h6QvSTDKEAEi7Sx02zaf1KhE-AAVB6aOrhyeyzuIRhQ", "A1:L7")
+    # processSpreadsheet2(getSheetService(), "1h6QvSTDKEAEi7Sx02zaf1KhE-AAVB6aOrhyeyzuIRhQ", "A1:L7")
+
+    # use canhdq service account
+    processSpreadsheet2(getSheetService(), "1bSoQE7PRa3EIRCypfJTHGvzWrjDIY-1U9e9jxqCCc9A", "A1:L7")
+
 
 def main():
 
